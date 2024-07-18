@@ -105,10 +105,10 @@ defmodule Ueberauth.Strategy.WorkOS do
         |> put_private(:workos_token, token)
 
       {:error, %OAuth2.Response{body: %{"error" => error, "error_description" => description}}} ->
-        {:error, {error, description}}
+        set_errors!(conn, [error(error, description)])
 
       {:error, %OAuth2.Error{reason: reason}} ->
-        {:error, {"error", to_string(reason)}}
+        set_errors!(conn, [error("error", to_string(reason))])
     end
   end
 

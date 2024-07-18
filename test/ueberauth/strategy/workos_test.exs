@@ -8,7 +8,10 @@ defmodule Ueberauth.Strategy.WorkOSTest do
   setup_with_mocks([
     {OAuth2.Client, [:passthrough],
      [
-       get_token: fn _client, _params ->
+       get_token: fn
+       _client, [code: "broken-code"] ->
+         {:error, %OAuth2.Response{body: %{"error" => "invalid_code", "error_description" => "unable to exchange invalid code"}}}
+       _client, _params ->
          {:ok,
           %OAuth2.Client{
             token: %OAuth2.AccessToken{
@@ -153,6 +156,12 @@ defmodule Ueberauth.Strategy.WorkOSTest do
 
     test "handles an error response", %{conn: conn} do
       conn = %{conn | params: %{"error" => "some error"}}
+      conn = WorkOS.handle_callback!(conn)
+      assert conn.assigns[:ueberauth_failure]
+    end
+
+    test "handles an error exchanging oauth code", %{conn: conn} do
+      conn = %{conn | params: %{"code" => "broken-code"}}
       conn = WorkOS.handle_callback!(conn)
       assert conn.assigns[:ueberauth_failure]
     end
